@@ -1,0 +1,532 @@
+/* Variables y Reset */
+:root {
+    --primary: #2A5298;
+    --primary-dark: #1E3C72;
+    --secondary: #00B4D8;
+    --accent: #0077B6;
+    --light: #F8F9FA;
+    --dark: #212529;
+    --success: #28A745;
+    --danger: #DC3545;
+    --warning: #FFC107;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: var(--dark);
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+.control-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* Header */
+.control-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 25px 20px;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-content h1 {
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 2.2rem;
+    font-weight: 700;
+    background: linear-gradient(45deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.header-content h1 i {
+    font-size: 2.5rem;
+    color: var(--secondary);
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    color: var(--dark);
+    font-weight: 500;
+}
+
+.logout-btn {
+    background: linear-gradient(135deg, var(--danger), #c82333);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.logout-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(220, 53, 69, 0.3);
+}
+
+/* Main Content */
+.control-main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 30px;
+}
+
+.control-panel {
+    display: grid;
+    gap: 25px;
+}
+
+/* Bluetooth Controls */
+.bluetooth-card {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 25px;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.bluetooth-card h3 {
+    color: var(--primary);
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.bluetooth-card h3::before {
+    content: '';
+    width: 4px;
+    height: 20px;
+    background: linear-gradient(135deg, #0082fc, #00b4d8);
+    border-radius: 2px;
+}
+
+.bluetooth-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.bluetooth-btn {
+    padding: 15px;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.bluetooth-btn.connect {
+    background: linear-gradient(135deg, var(--success), #20c997);
+    color: white;
+}
+
+.bluetooth-btn.disconnect {
+    background: linear-gradient(135deg, #6c757d, #495057);
+    color: white;
+}
+
+.bluetooth-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.bluetooth-btn:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.connection-status {
+    text-align: center;
+    padding: 12px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.connection-status.connected {
+    background: #d4edda;
+    color: var(--success);
+    border: 2px solid #c3e6cb;
+}
+
+.connection-status.disconnected {
+    background: #f8d7da;
+    color: var(--danger);
+    border: 2px solid #f5c6cb;
+}
+
+/* Cards */
+.status-card, .controls-card, .platform-card, .emergency-card {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.status-card h3, .controls-card h3, .platform-card h3 {
+    color: var(--primary);
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.status-card h3::before, .controls-card h3::before, .platform-card h3::before {
+    content: '';
+    width: 4px;
+    height: 20px;
+    background: linear-gradient(135deg, var(--secondary), var(--accent));
+    border-radius: 2px;
+}
+
+.status-indicators {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--light);
+    border-radius: 10px;
+    font-weight: 500;
+    border-left: 4px solid var(--success);
+}
+
+.status-item i {
+    font-size: 1.1rem;
+}
+
+.status-item.online i {
+    color: var(--success);
+}
+
+.status-item.warning {
+    border-left-color: var(--warning);
+}
+
+.status-item.warning i {
+    color: var(--warning);
+}
+
+/* Controles principales */
+.control-buttons {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 20px;
+    align-items: center;
+}
+
+.control-btn {
+    padding: 25px 20px;
+    border: none;
+    border-radius: 15px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.up-btn {
+    background: linear-gradient(135deg, var(--success), #20c997);
+    color: white;
+}
+
+.stop-btn {
+    background: linear-gradient(135deg, var(--warning), #fd7e14);
+    color: white;
+    grid-column: 2;
+}
+
+.down-btn {
+    background: linear-gradient(135deg, var(--danger), #dc3545);
+    color: white;
+}
+
+.control-btn:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+}
+
+.control-btn:active {
+    transform: translateY(-2px);
+}
+
+/* Controles de plataforma */
+.platform-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.platform-btn {
+    padding: 20px 15px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    box-shadow: 0 8px 20px rgba(42, 82, 152, 0.3);
+}
+
+.platform-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 25px rgba(42, 82, 152, 0.4);
+}
+
+/* Botón de emergencia */
+.emergency-card {
+    text-align: center;
+}
+
+.emergency-btn {
+    width: 100%;
+    padding: 25px;
+    background: linear-gradient(135deg, var(--danger), #c82333);
+    color: white;
+    border: none;
+    border-radius: 15px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    box-shadow: 0 10px 30px rgba(220, 53, 69, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.emergency-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 40px rgba(220, 53, 69, 0.6);
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 40px rgba(220, 53, 69, 0.6); }
+    50% { box-shadow: 0 0 60px rgba(220, 53, 69, 0.8); }
+    100% { box-shadow: 0 0 40px rgba(220, 53, 69, 0.6); }
+}
+
+/* Panel de logs */
+.logs-panel {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.logs-panel h3 {
+    color: var(--primary);
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logs-panel h3::before {
+    content: '';
+    width: 4px;
+    height: 20px;
+    background: linear-gradient(135deg, var(--secondary), var(--accent));
+    border-radius: 2px;
+}
+
+.logs-container {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-top: 15px;
+    background: var(--light);
+    border-radius: 12px;
+    padding: 15px;
+}
+
+.log-entry {
+    padding: 12px 15px;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    transition: background-color 0.2s ease;
+}
+
+.log-entry:hover {
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+}
+
+.log-entry:last-child {
+    border-bottom: none;
+}
+
+.log-time {
+    color: #666;
+    font-size: 0.85rem;
+    font-weight: 500;
+    min-width: 70px;
+}
+
+.log-message {
+    flex: 1;
+    font-weight: 500;
+}
+
+.log-message.success {
+    color: var(--success);
+}
+
+.log-message.error {
+    color: var(--danger);
+}
+
+.log-message.warning {
+    color: var(--warning);
+}
+
+.log-message.info {
+    color: var(--primary);
+}
+
+/* Responsive */
+@media (max-width: 968px) {
+    .control-main {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .control-buttons {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .stop-btn {
+        grid-column: 1;
+    }
+    
+    .platform-buttons {
+        grid-template-columns: 1fr;
+    }
+    
+    .bluetooth-controls {
+        grid-template-columns: 1fr;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .header-content h1 {
+        font-size: 1.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .control-main {
+        padding: 20px 15px;
+    }
+    
+    .status-card, .controls-card, .platform-card, .emergency-card, .logs-panel, .bluetooth-card {
+        padding: 20px;
+    }
+    
+    .control-btn {
+        padding: 20px 15px;
+        font-size: 1.1rem;
+    }
+    
+    .emergency-btn {
+        padding: 20px;
+        font-size: 1.1rem;
+    }
+}
+
+/* Scrollbar personalizado */
+.logs-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.logs-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.logs-container::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 3px;
+}
+
+.logs-container::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-dark);
+}
