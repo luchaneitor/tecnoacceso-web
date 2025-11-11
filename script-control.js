@@ -35,43 +35,56 @@ class ControlPanel {
     }
 
     loadUserInfo() {
-    document.getElementById('userWelcome').textContent = 
-        `Bienvenido, ${this.currentUser.nombre}`;
-    document.getElementById('userType').textContent = 
-        this.currentUser.tipo === 'admin' ? 'Administrador' : 'Usuario';
-    
-    // ✅ OCULTAR TODO EL PANEL DERECHO PARA USUARIOS NORMALES
-    const panelDerecho = document.getElementById('panelDerecho');
-    
-    if (this.currentUser.tipo !== 'admin') {
-        // Usuario normal - ocultar todo el panel derecho
-        if (panelDerecho) {
-            panelDerecho.style.display = 'none';
+        document.getElementById('userWelcome').textContent = 
+            `Bienvenido, ${this.currentUser.nombre}`;
+        document.getElementById('userType').textContent = 
+            this.currentUser.tipo === 'admin' ? 'Administrador' : 'Usuario';
+        
+        // ✅ OCULTAR TODO EL PANEL DERECHO PARA USUARIOS NORMALES
+        const panelDerecho = document.getElementById('panelDerecho');
+        const registrosPanel = document.getElementById('registrosPanel');
+        
+        if (this.currentUser.tipo !== 'admin') {
+            // Usuario normal - ocultar todo el panel derecho
+            if (panelDerecho) {
+                panelDerecho.style.display = 'none';
+            }
+            
+            // También ocultar el panel de registros específicamente
+            if (registrosPanel) {
+                registrosPanel.style.display = 'none';
+            }
+            
+            // Ajustar el layout para que ocupe todo el ancho
+            document.querySelector('.control-main').style.gridTemplateColumns = '1fr';
+            document.querySelector('.control-main').style.gap = '0';
+            
+            return; // Salir de la función
         }
         
-        // También ajustar el layout para que ocupe todo el ancho
-        document.querySelector('.control-main').style.gridTemplateColumns = '1fr';
-        document.querySelector('.control-main').style.gap = '0';
+        // ✅ SOLO ADMIN LLEGA AQUÍ - Mostrar todo el panel derecho
+        if (panelDerecho) {
+            panelDerecho.style.display = 'block';
+        }
         
-        return; // Salir de la función
+        if (registrosPanel) {
+            registrosPanel.style.display = 'block';
+        }
+        
+        // Restaurar layout normal
+        document.querySelector('.control-main').style.gridTemplateColumns = '2fr 1fr';
+        document.querySelector('.control-main').style.gap = '30px';
+        
+        // Cargar datos para admin
+        this.cargarActividades();
+        
+        if (window.alertasSystem) {
+            window.alertasSystem.fetchAlertas();
+        }
+        
+        // ✅ CARGAR REGISTROS SOLO PARA ADMIN
+        this.cargarRegistros();
     }
-    
-    // ✅ SOLO ADMIN LLEGA AQUÍ - Mostrar todo el panel derecho
-    if (panelDerecho) {
-        panelDerecho.style.display = 'block';
-    }
-    
-    // Restaurar layout normal
-    document.querySelector('.control-main').style.gridTemplateColumns = '2fr 1fr';
-    document.querySelector('.control-main').style.gap = '30px';
-    
-    // Cargar datos para admin
-    this.cargarActividades();
-    
-    if (window.alertasSystem) {
-        window.alertasSystem.fetchAlertas();
-    }
-}
 
     startClock() {
         const updateTime = () => {
@@ -103,6 +116,13 @@ class ControlPanel {
 
     async connectBluetooth() {
         try {
+            // ✅ Registrar inicio de conexión
+            await this.registrarLogSistema(
+                'Conexión Bluetooth iniciada', 
+                'bluetooth', 
+                { dispositivo: 'TecnoAcceso ESP32' }
+            );
+            
             addLog('📱 Buscando dispositivo TecnoAcceso...', 'info');
             this.updateBluetoothStatus('Buscando...', 'info');
 
@@ -123,21 +143,57 @@ class ControlPanel {
             
             addLog('🚀 CONEXIÓN EXITOSA - Sistema listo para controlar', 'success');
 
+            // ✅ Registrar conexión exitosa
+            await this.registrarLogSistema(
+                'Conexión Bluetooth exitosa', 
+                'bluetooth', 
+                { 
+                    dispositivo: this.device.name,
+                    id: this.device.id,
+                    estado: 'conectado'
+                }, 
+                'exito'
+            );
+
             this.device.addEventListener('gattserverdisconnected', () => {
                 this.handleDisconnection();
             });
 
         } catch (error) {
+            let errorMessage = '';
+            let errorDetails = {};
+            
             if (error.name === 'NotFoundError') {
-                addLog('❌ No se encontró el dispositivo TecnoAcceso', 'error');
+                errorMessage = '❌ No se encontró el dispositivo TecnoAcceso';
                 this.updateBluetoothStatus('No encontrado', 'error');
+                errorDetails = { tipo: 'dispositivo_no_encontrado' };
             } else if (error.name === 'SecurityError') {
-                addLog('❌ Error de seguridad. Asegúrate de usar HTTPS', 'error');
+                errorMessage = '❌ Error de seguridad. Asegúrate de usar HTTPS';
                 this.updateBluetoothStatus('Error seguridad', 'error');
+                errorDetails = { tipo: 'error_seguridad' };
+            } else if (error.name === 'NetworkError') {
+                errorMessage = '❌ Error de red. Verifica la conexión Bluetooth';
+                this.updateBluetoothStatus('Error red', 'error');
+                errorDetails = { tipo: 'error_red' };
             } else {
-                addLog(`❌ Error de conexión: ${error.message}`, 'error');
+                errorMessage = `❌ Error de conexión: ${error.message}`;
                 this.updateBluetoothStatus('Error conexión', 'error');
+                errorDetails = { 
+                    tipo: 'error_general', 
+                    mensaje: error.message,
+                    nombre: error.name
+                };
             }
+            
+            addLog(errorMessage, 'error');
+            
+            // ✅ Registrar error en logs del sistema
+            await this.registrarLogSistema(
+                'Error en conexión Bluetooth', 
+                'bluetooth', 
+                errorDetails, 
+                'fallo'
+            );
         }
     }
 
@@ -171,6 +227,14 @@ class ControlPanel {
         this.updateConnectionStatus();
         this.updateBluetoothStatus('Desconectado', 'error');
         addLog('🔴 Desconectado del ESP32', 'warning');
+        
+        // ✅ Registrar desconexión en logs
+        this.registrarLogSistema(
+            'Desconexión Bluetooth', 
+            'bluetooth', 
+            { motivo: 'desconexion_remota' }, 
+            'advertencia'
+        );
     }
 
     disconnectBluetooth() {
@@ -178,6 +242,14 @@ class ControlPanel {
             this.device.gatt.disconnect();
         }
         this.handleDisconnection();
+        
+        // ✅ Registrar desconexión manual
+        this.registrarLogSistema(
+            'Desconexión Bluetooth manual', 
+            'bluetooth', 
+            { tipo: 'desconexion_manual' }, 
+            'exito'
+        );
     }
 
     updateConnectionStatus() {
@@ -217,58 +289,110 @@ class ControlPanel {
         }
     }
 
-    // ✅ NUEVO: REGISTRAR ACTIVIDADES
-    async registrarActividad(accion, comando = '') {
-    try {
-        const userData = JSON.parse(localStorage.getItem('tecnoacceso_user'));
-        
-        console.log('📝 ACTIVIDAD REGISTRADA:', {
-            usuario: userData.nombre,
-            dependencia: userData.dependencia,
-            accion: accion,
-            comando: comando
-        });
-        
-        // Guardar en localStorage como respaldo
-        this.guardarActividadLocal({
-            usuario: userData.nombre,
-            dependencia: userData.dependencia,
-            accion: accion,
-            comando: comando,
-            fecha: new Date().toLocaleString()
-        });
+    // ✅ NUEVO: REGISTRAR EN LOGS DEL SISTEMA
+    async registrarLogSistema(accion, tipo = 'sistema', detalles = null, estado = 'exito') {
+        try {
+            const userData = JSON.parse(localStorage.getItem('tecnoacceso_user'));
+            
+            console.log('📋 REGISTRO SISTEMA:', { accion, tipo, estado, detalles });
+            
+            // Guardar en base de datos
+            const response = await fetch('registros.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    accion: accion,
+                    tipo: tipo,
+                    detalles: detalles ? JSON.stringify(detalles) : null,
+                    usuario_id: userData?.id || null,
+                    estado: estado
+                })
+            });
 
-        // ✅ SOLO notificar si hay un admin conectado
-        // Esto evita que usuarios normales gasten recursos
-        if (userData.tipo === 'admin') {
-            this.actualizarActividadesParaTodos();
+            const result = await response.json();
+            
+            if (!result.success) {
+                console.error('Error guardando registro:', result.error);
+            }
+            
+        } catch (error) {
+            console.error('Error registrando log:', error);
         }
-        
-        return { success: true };
-        
-    } catch (error) {
-        console.error('Error registrando actividad:', error);
-        return { success: false };
     }
-}
+
+    // ✅ REGISTRAR ACTIVIDADES EN BD Y LOCALSTORAGE
+    async registrarActividad(accion, comando = '') {
+        try {
+            const userData = JSON.parse(localStorage.getItem('tecnoacceso_user'));
+            
+            console.log('📝 ACTIVIDAD REGISTRADA:', {
+                usuario: userData.nombre,
+                dependencia: userData.dependencia,
+                accion: accion,
+                comando: comando
+            });
+            
+            // ✅ 1. GUARDAR EN LOCALSTORAGE (como respaldo)
+            this.guardarActividadLocal({
+                usuario: userData.nombre,
+                dependencia: userData.dependencia,
+                accion: accion,
+                comando: comando,
+                fecha: new Date().toLocaleString()
+            });
+
+            // ✅ 2. GUARDAR EN BASE DE DATOS MYSQL
+            const response = await fetch('actividades.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    usuario_id: userData.id,
+                    dependencia: userData.dependencia,
+                    accion: accion,
+                    comando: comando
+                })
+            });
+
+            const result = await response.json();
+            
+            if (!result.success) {
+                console.error('Error guardando actividad en BD:', result.error);
+            }
+            
+            // ✅ SOLO notificar si hay un admin conectado
+            if (userData.tipo === 'admin') {
+                this.actualizarActividadesParaTodos();
+            }
+            
+            return { success: true };
+            
+        } catch (error) {
+            console.error('Error registrando actividad:', error);
+            return { success: false };
+        }
+    }
 
     guardarActividadLocal(actividad) {
-    // Guardar en localStorage como respaldo
-    let actividades = JSON.parse(localStorage.getItem('tecnoacceso_actividades') || '[]');
-    actividades.unshift(actividad); // Agregar al inicio
-    
-    // Mantener solo las últimas 50 actividades
-    if (actividades.length > 50) {
-        actividades = actividades.slice(0, 50);
+        // Guardar en localStorage como respaldo
+        let actividades = JSON.parse(localStorage.getItem('tecnoacceso_actividades') || '[]');
+        actividades.unshift(actividad); // Agregar al inicio
+        
+        // Mantener solo las últimas 50 actividades
+        if (actividades.length > 50) {
+            actividades = actividades.slice(0, 50);
+        }
+        
+        localStorage.setItem('tecnoacceso_actividades', JSON.stringify(actividades));
+        
+        // Actualizar la vista si es admin
+        if (this.currentUser && this.currentUser.tipo === 'admin') {
+            this.mostrarActividades(actividades);
+        }
     }
-    
-    localStorage.setItem('tecnoacceso_actividades', JSON.stringify(actividades));
-    
-    // Actualizar la vista si es admin
-    if (this.currentUser && this.currentUser.tipo === 'admin') {
-        this.mostrarActividades(actividades);
-    }
-}
 
     actualizarActividadesParaTodos() {
         // Si este usuario es admin, actualizar inmediatamente
@@ -292,7 +416,7 @@ class ControlPanel {
         return userIds[username] || null;
     }
 
-    // ✅ NUEVO: CARGAR Y MOSTRAR ACTIVIDADES
+    // ✅ CARGAR Y MOSTRAR ACTIVIDADES
     async cargarActividades() {
         try {
             console.log('Cargando actividades...');
@@ -347,6 +471,53 @@ class ControlPanel {
         `).join('');
     }
 
+    // ✅ CARGAR REGISTROS DEL SISTEMA
+    async cargarRegistros() {
+        try {
+            const response = await fetch('registros.php');
+            const registros = await response.json();
+            
+            this.mostrarRegistros(registros);
+            
+        } catch (error) {
+            console.error('Error cargando registros:', error);
+            const container = document.getElementById('registrosContainer');
+            if (container) {
+                container.innerHTML = '<div class="no-alertas">Error cargando registros</div>';
+            }
+        }
+    }
+
+    mostrarRegistros(registros) {
+        const container = document.getElementById('registrosContainer');
+        const countElement = document.getElementById('registrosCount');
+        
+        if (!container) return;
+
+        countElement.textContent = `${registros.length} registros`;
+        
+        if (registros.length === 0) {
+            container.innerHTML = '<div class="no-alertas">No hay registros del sistema</div>';
+            return;
+        }
+
+        container.innerHTML = registros.map(reg => `
+            <div class="alerta-item ${reg.tipo}">
+                <div class="alerta-content">
+                    <div class="alerta-mensaje">
+                        <strong>${reg.tipo.toUpperCase()}:</strong> ${reg.accion}
+                        ${reg.estado !== 'exito' ? ` <span style="color: ${reg.estado === 'fallo' ? 'red' : 'orange'}">[${reg.estado.toUpperCase()}]</span>` : ''}
+                    </div>
+                    <div class="alerta-meta">
+                        ${reg.usuario_nombre ? `<span class="alerta-usuario">${reg.usuario_nombre}</span>` : ''}
+                        <span class="alerta-tiempo">${new Date(reg.fecha).toLocaleString()}</span>
+                    </div>
+                    ${reg.detalles ? `<div class="alerta-detalles" style="font-size: 0.8rem; color: #666; margin-top: 5px;">${reg.detalles}</div>` : ''}
+                </div>
+            </div>
+        `).join('');
+    }
+
     actualizarTimestamp() {
         const ahora = new Date();
         const timestamp = `Última actualización: ${ahora.toLocaleTimeString()}`;
@@ -356,35 +527,36 @@ class ControlPanel {
         }
     }
 
-    // ✅ NUEVO: ACTUALIZACIÓN AUTOMÁTICA
+    // ✅ ACTUALIZACIÓN AUTOMÁTICA
     iniciarEscuchaAutomatica() {
-    // Escuchar cambios en localStorage (para múltiples pestañas)
-    window.addEventListener('storage', (event) => {
-        if (event.key === 'tecnoacceso_ultima_actualizacion' && this.currentUser.tipo === 'admin') {
-            console.log('🔄 Actualizando alertas por cambio externo');
-            if (window.alertasSystem) {
-                window.alertasSystem.fetchAlertas();
+        // Escuchar cambios en localStorage (para múltiples pestañas)
+        window.addEventListener('storage', (event) => {
+            if (event.key === 'tecnoacceso_ultima_actualizacion' && this.currentUser.tipo === 'admin') {
+                console.log('🔄 Actualizando alertas por cambio externo');
+                if (window.alertasSystem) {
+                    window.alertasSystem.fetchAlertas();
+                }
             }
-        }
-        
-        if (event.key === 'tecnoacceso_actividades_actualizadas' && this.currentUser.tipo === 'admin') {
-            console.log('🔄 Actualizando actividades por cambio externo');
-            this.cargarActividades();
-        }
-    });
+            
+            if (event.key === 'tecnoacceso_actividades_actualizadas' && this.currentUser.tipo === 'admin') {
+                console.log('🔄 Actualizando actividades por cambio externo');
+                this.cargarActividades();
+            }
+        });
 
-    // Actualizar automáticamente cada 3 segundos (solo para admin)
-    if (this.currentUser.tipo === 'admin') {
-        setInterval(() => {
-            this.cargarActividades();
-            if (window.alertasSystem) {
-                window.alertasSystem.fetchAlertas();
-            }
-        }, 3000); // 3000 ms = 3 segundos
+        // Actualizar automáticamente cada 3 segundos (solo para admin)
+        if (this.currentUser.tipo === 'admin') {
+            setInterval(() => {
+                this.cargarActividades();
+                this.cargarRegistros();
+                if (window.alertasSystem) {
+                    window.alertasSystem.fetchAlertas();
+                }
+            }, 3000); // 3000 ms = 3 segundos
+        }
     }
-}
 
-    // ✅ NUEVO: DATOS DE EJEMPLO
+    // ✅ DATOS DE EJEMPLO
     agregarEjemplosSiVacio() {
         const actividades = JSON.parse(localStorage.getItem('tecnoacceso_actividades') || '[]');
         const alertas = JSON.parse(localStorage.getItem('tecnoacceso_alertas') || '[]');
@@ -588,7 +760,7 @@ class AlertasSystem {
                 usuario: userData?.nombre
             });
             
-            // Guardar en localStorage
+            // ✅ 1. GUARDAR EN LOCALSTORAGE
             this.guardarAlertaLocal({
                 mensaje: mensaje,
                 tipo: tipo,
@@ -596,6 +768,26 @@ class AlertasSystem {
                 usuario_nombre: userData?.nombre,
                 fecha: new Date().toLocaleString()
             });
+
+            // ✅ 2. GUARDAR EN BASE DE DATOS MYSQL
+            const response = await fetch('alertas.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    mensaje: mensaje,
+                    tipo: tipo,
+                    prioridad: prioridad,
+                    usuario_id: userData?.id || null
+                })
+            });
+
+            const result = await response.json();
+            
+            if (!result.success) {
+                console.error('Error guardando alerta en BD:', result.error);
+            }
 
             // ✅ ACTUALIZAR AUTOMÁTICAMENTE para todos los admins
             this.actualizarAlertasParaTodos();
@@ -647,9 +839,18 @@ async function sendCommand(command) {
         const accion = `${userData.nombre} ejecutó: ${commandDesc}`;
         await window.controlPanel.registrarActividad(accion, command);
         
+        // Registrar en logs del sistema
+        await window.controlPanel.registrarLogSistema(
+            `Comando ejecutado: ${commandDesc}`,
+            'movimiento',
+            { comando: command, descripcion: commandDesc },
+            'exito'
+        );
+        
         // ✅ FORZAR ACTUALIZACIÓN INMEDIATA si es admin
         if (userData.tipo === 'admin') {
             window.controlPanel.cargarActividades();
+            window.controlPanel.cargarRegistros();
         }
     }
     
@@ -674,9 +875,18 @@ async function sendEmergency() {
         const accion = `🚨 EMERGENCIA ACTIVADA por ${userData.nombre}`;
         await window.controlPanel.registrarActividad(accion, 'EMERGENCY');
         
+        // Registrar emergencia en logs
+        await window.controlPanel.registrarLogSistema(
+            'BOTÓN DE EMERGENCIA ACTIVADO',
+            'sistema',
+            { tipo: 'emergencia', accion: 'detencion_total' },
+            'advertencia'
+        );
+        
         // ✅ FORZAR ACTUALIZACIÓN INMEDIATA si es admin
         if (userData.tipo === 'admin') {
             window.controlPanel.cargarActividades();
+            window.controlPanel.cargarRegistros();
         }
     }
     
@@ -802,6 +1012,14 @@ async function recargarActividades() {
     if (window.controlPanel && window.controlPanel.currentUser.tipo === 'admin') {
         await window.controlPanel.cargarActividades();
         addLog('✅ Actividades actualizadas', 'success');
+    }
+}
+
+// ✅ FUNCIÓN PARA CARGAR REGISTROS
+async function cargarRegistros() {
+    if (window.controlPanel && window.controlPanel.currentUser.tipo === 'admin') {
+        await window.controlPanel.cargarRegistros();
+        addLog('✅ Registros actualizados', 'success');
     }
 }
 
