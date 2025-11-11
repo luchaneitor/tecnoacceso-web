@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control - TECNOACCESO</title>
+    <link rel="stylesheet" href="style-control.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="control-container">
+        <header class="control-header">
+            <div class="header-content">
+                <h1><i class="fas fa-wheelchair-move"></i> Panel de Control TECNOACCESO</h1>
+                <div class="user-info">
+                    <span id="userWelcome">Bienvenido</span>
+                    <button id="logoutBtn" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="control-main">
+            <div class="control-panel">
+                <!-- Conexión Bluetooth -->
+                <div class="bluetooth-card">
+                    <h3><i class="fas fa-bluetooth-b"></i> Conexión Bluetooth</h3>
+                    <div class="bluetooth-controls">
+                        <button id="connectBtn" class="bluetooth-btn connect">
+                            <i class="fas fa-link"></i>
+                            <span>Conectar Bluetooth</span>
+                        </button>
+                        <button id="disconnectBtn" class="bluetooth-btn disconnect" disabled>
+                            <i class="fas fa-unlink"></i>
+                            <span>Desconectar</span>
+                        </button>
+                    </div>
+                    <div class="connection-status disconnected" id="btStatusContainer">
+                        <span id="btStatus">Desconectado</span>
+                    </div>
+                </div>
+
+                <!-- Estado del Sistema -->
+                <div class="status-card">
+                    <h3><i class="fas fa-chart-bar"></i> Estado del Sistema</h3>
+                    <div class="status-indicators">
+                        <div class="status-item online">
+                            <i class="fas fa-circle"></i>
+                            <span>Sistema: <strong id="systemStatus">Desconectado</strong></span>
+                        </div>
+                        <div class="status-item">
+                            <i class="fas fa-elevator"></i>
+                            <span>Elevador: <strong id="elevatorStatus">Listo</strong></span>
+                        </div>
+                        <div class="status-item">
+                            <i class="fas fa-user"></i>
+                            <span>Usuario: <strong id="userType">Activo</strong></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controles del Elevador -->
+                <div class="controls-card">
+                    <h3><i class="fas fa-gamepad"></i> Controles del Elevador</h3>
+                    <div class="control-buttons">
+                        <button class="control-btn up-btn" onclick="sendCommand('A')">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>SUBIR</span>
+                        </button>
+                        
+                        <button class="control-btn stop-btn" onclick="sendCommand('C')">
+                            <i class="fas fa-stop"></i>
+                            <span>DETENER</span>
+                        </button>
+                        
+                        <button class="control-btn down-btn" onclick="sendCommand('B')">
+                            <i class="fas fa-arrow-down"></i>
+                            <span>BAJAR</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controles de Plataforma -->
+                <div class="platform-card">
+                    <h3><i class="fas fa-platform"></i> Controles de Plataforma</h3>
+                    <div class="platform-buttons">
+                        <button class="platform-btn" onclick="sendCommand('D')">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>SUBIR PLATAFORMA</span>
+                        </button>
+                        <button class="platform-btn" onclick="sendCommand('E')">
+                            <i class="fas fa-arrow-down"></i>
+                            <span>BAJAR PLATAFORMA</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Emergencia -->
+                <div class="emergency-card">
+                    <button class="emergency-btn" onclick="sendEmergency()">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>BOTÓN DE EMERGENCIA</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ✅ PANEL DERECHO - SOLO PARA ADMIN -->
+            <div id="panelDerecho">
+                <!-- Logs de Actividad -->
+                <div class="logs-panel" id="logsPanel">
+                    <h3><i class="fas fa-clipboard-list"></i> Registro de Actividad</h3>
+                    <div class="logs-container" id="logsContainer">
+                        <div class="log-entry">
+                            <span class="log-time" id="currentTime">--:--:--</span>
+                            <span class="log-message">Sistema de control iniciado</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel de Alertas -->
+                <div class="alertas-panel" id="alertasPanel">
+                    <h3><i class="fas fa-bell"></i> Alertas y Emergencias</h3>
+                    <div class="alertas-header">
+                        <span id="alertasCount">0 alertas nuevas</span>
+                        <button onclick="marcarTodasLeidas()" class="btn-mark-read">
+                            <i class="fas fa-check-double"></i> Marcar todas como leídas
+                        </button>
+                    </div>
+                    <div class="alertas-container" id="alertasContainer">
+                        <div class="no-alertas">No hay alertas nuevas</div>
+                    </div>
+                </div>
+
+                <!-- Panel de Actividades -->
+                <div class="alertas-panel" id="actividadesPanel">
+                    <h3><i class="fas fa-history"></i> Historial de Actividades</h3>
+                    <div class="alertas-header">
+                        <div>
+                            <span id="actividadesCount">0 actividades</span>
+                            <small id="ultimaActualizacion" style="font-size: 0.8rem; color: #666; margin-left: 10px;"></small>
+                        </div>
+                        <button onclick="recargarActividades()" class="btn-mark-read">
+                            <i class="fas fa-sync-alt"></i> Actualizar
+                        </button>
+                    </div>
+                    <div class="alertas-container" id="actividadesContainer">
+                        <div class="no-alertas">Cargando actividades...</div>
+                    </div>
+                </div>
+
+                                <!-- Panel de Registros del Sistema -->
+                <div class="alertas-panel" id="registrosPanel">
+                    <h3><i class="fas fa-terminal"></i> Registros del Sistema</h3>
+                    <div class="alertas-header">
+                        <span id="registrosCount">0 registros</span>
+                        <button onclick="cargarRegistros()" class="btn-mark-read">
+                            <i class="fas fa-sync-alt"></i> Actualizar
+                        </button>
+                    </div>
+                    <div class="alertas-container" id="registrosContainer">
+                        <div class="no-alertas">Cargando registros...</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script-control.js"></script>
+</body>
+</html>
