@@ -1,10 +1,10 @@
 <?php
 $conn = new mysqli(
     getenv('DB_HOST'),
-    getenv('DB_USER'),
-    getenv('DB_PASSWORD'),
     getenv('DB_NAME'),
-    getenv('DB_PORT')
+    getenv('DB_PASSWORD'),
+    getenv('DB_PORT'),
+    getenv('DB_USER')
 );
 
 if ($conn->connect_error) {
@@ -12,4 +12,5 @@ if ($conn->connect_error) {
 }
 }
 ?>
+
 
